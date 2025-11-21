@@ -14,5 +14,8 @@ services:
       AUTH_REDIRECT_URL: 'http://localhost:3000/token/'
       AUTH_LOGOUT_URL: 'http://localhost:3000/logout/'
       AUTH_SCOPE: 'offline_access offline openid'
+      SRV_DIR: ./dist
     ports:
-      - '3000:8080'
+      - '3000:80'
+    volumes:
+      - /tmp/log/:/log/

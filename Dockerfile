@@ -15,17 +15,17 @@ RUN npm run build
 # --- Runtime stage ---
 FROM node:20-bullseye
 WORKDIR /app
+RUN mkdir /log
 
 # Copy built app from build stage
 COPY --from=build /app/dist ./dist
 COPY entrypoint.sh ./entrypoint.sh
-COPY server.js ./server.js
 
 # Install a tiny static server, e.g. serve
-RUN npm install express
+RUN npm install -g @outlawdesigns/static-express-server
 
 # Expose port
-EXPOSE 8080
+EXPOSE 80
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["node", "./server.js"]
+CMD ["/bin/sh","-c","static-express-server > /log/loe-music-app.log"]
