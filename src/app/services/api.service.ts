@@ -36,6 +36,7 @@ export class ApiService {
   tmpAlbums:Album[] = [];
   albums:Subject<Album[]> = new BehaviorSubject<Album[]>([]);
   domain:string;
+  cookieDomain:string;
 
   constructor(
     @Inject('AUTH_DISCOVERY_URI') AUTH_DISCOVERY_URI:string,
@@ -45,6 +46,7 @@ export class ApiService {
     @Inject('AUTH_SCOPE') AUTH_SCOPE:string,
     @Inject('API_ENDPOINT') API_ENDPOINT:string,
     @Inject('LOE_DOMAIN') LOE_DOMAIN:string,
+    @Inject('COOKIE_DOMAIN') COOKIE_DOMAIN:string,
     private http:HttpClient,
     private cookie:CookieService,
     private router:Router) {
@@ -56,6 +58,7 @@ export class ApiService {
       this.authScope = AUTH_SCOPE;
       this.apiUrl = API_ENDPOINT;
       this.domain = LOE_DOMAIN;
+      this.cookieDomain = COOKIE_DOMAIN;
       // this.isInitialized = false;
   }
   async ensureInitialized():Promise<void>{
@@ -66,6 +69,7 @@ export class ApiService {
   initApiClient():Promise<void>{
     return new Promise(async (resolve, reject)=>{
       try{
+        console.log(isDevMode());
         loeClient.init(this.apiUrl, this.authScope);
         await loeClient.get().auth.init(this.authDiscoveryUri,this.authClientId);
         // this.isInitialized = true;
@@ -89,10 +93,12 @@ export class ApiService {
     try{
       const tokenSet = JSON.parse(this.cookie.get('oathTokenSet'));
       const user = await loeClient.get().auth.verifyAccessToken(tokenSet.access_token,[this.apiUrl]);
+      loeClient.get().auth.setTokenSet(tokenSet);
       this.router.navigateByUrl('/recent');
+      return;
     }catch(err){
-      console.error(err);
-      //if something, authorizationCodeFlow()..
+      isDevMode() ? this.cookie.delete('oathTokenSet', '/', 'localhost', true, 'Strict'):this.cookie.delete('oathTokenSet', '/', this.cookieDomain, true, 'Strict');
+      throw new Error('Token expired. Cookie Deleted.');
     }
   }
   async swapAuthorizationToken(authorizationCode:string):Promise<void>{
@@ -104,8 +110,7 @@ export class ApiService {
     }
     await loeClient.get().auth.completeAuthFlow(url,state,verifier);
     const tokenSet = loeClient.get().auth.getTokenSet();
-    this.cookie.set('oathTokenSet',JSON.stringify(tokenSet));
-    //console.log(tokenSet);
+    isDevMode() ? this.cookie.set('oathTokenSet',JSON.stringify(tokenSet),200,'/','localhost',false,'Strict'):this.cookie.set('oathTokenSet',JSON.stringify(tokenSet),200,'/',this.cookieDomain,true,'Strict');
     this.router.navigateByUrl('/recent');
   }
   getSong(UID:number):Observable<Song>{

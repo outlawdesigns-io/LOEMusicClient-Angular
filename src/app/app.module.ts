@@ -33,9 +33,6 @@ import { MaterialModule } from './material.module';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
 
-// export function initializeApiClient(api: ApiService) {
-//   return () => api.initApiClient();
-// }
 export function initializeConfig(config: AppConfigService){
   return () => config.load();
 }
@@ -94,12 +91,12 @@ const routeOptions: ExtraOptions = {
     AppConfigService,
     { provide: 'API_ENDPOINT', useFactory: (cfg: AppConfigService) => cfg.get('API_ENDPOINT'), deps: [AppConfigService] },
     { provide: 'LOE_DOMAIN', useFactory: (cfg: AppConfigService) => cfg.get('LOE_DOMAIN'), deps: [AppConfigService] },
+    { provide: 'COOKIE_DOMAIN', useFactory: (cfg: AppConfigService) => cfg.get('COOKIE_DOMAIN'), deps: [AppConfigService] },
     { provide: 'AUTH_CLIENT_ID', useFactory: (cfg: AppConfigService) => cfg.get('AUTH_CLIENT_ID'), deps: [AppConfigService] },
     { provide: 'AUTH_DISCOVERY_URI', useFactory: (cfg: AppConfigService) => cfg.get('AUTH_DISCOVERY_URI'), deps: [AppConfigService] },
     { provide: 'AUTH_REDIRECT_URL', useFactory: (cfg: AppConfigService) => cfg.get('AUTH_REDIRECT_URL'), deps: [AppConfigService] },
     { provide: 'AUTH_LOGOUT_URL', useFactory: (cfg: AppConfigService) => cfg.get('AUTH_LOGOUT_URL'), deps: [AppConfigService] },
     { provide: 'AUTH_SCOPE', useFactory: (cfg: AppConfigService) => cfg.get('AUTH_SCOPE'), deps: [AppConfigService] },
-    // {provide: APP_INITIALIZER, useFactory: initializeApiClient, deps: [ApiService, AppConfigService], multi: true},
     {provide: APP_INITIALIZER, useFactory: initializeConfig, deps: [AppConfigService], multi: true}
   ],
   entryComponents:[SearchBottomSheetComponent,RatingComponent,SavePlaylistComponent,RandomPlaylistBottomSheetComponent],

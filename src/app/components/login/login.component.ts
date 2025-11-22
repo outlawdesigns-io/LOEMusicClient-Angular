@@ -12,7 +12,11 @@ export class LoginComponent implements OnInit {
 
   ngOnInit() {
     this.api.ensureInitialized().then(()=>{
-      this.api.verifyToken();
+      this.api.verifyToken().catch((err)=>{
+        //OnExpiredToken: verifyToken() deletes cookie and throws an error.
+        //catch that and try again (triggering login)
+        this.api.verifyToken();
+      });
     }).catch((err)=>{
       console.log(err);
     });
