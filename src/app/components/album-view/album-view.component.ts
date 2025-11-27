@@ -21,19 +21,22 @@ export class AlbumViewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private ApiService:ApiService
-  ){
-    route.params.subscribe(params=>{
-      this.title = params['title'];
-      this.artist = params['artist'];
-      this.year = parseInt(params['year']);
-      this.ApiService.buildAlbumsFromLabels([this.title]);
-    });
-    this.ApiService.albums.subscribe(albums=>{
-      this.albums = albums;
-    });
-  }
+  ){}
 
   ngOnInit() {
+    this.ApiService.ensureInitialized().then(()=>{
+      this.ApiService.verifyToken().then(()=>{
+        this.route.params.subscribe(params=>{
+          this.title = params['title'];
+          this.artist = params['artist'];
+          this.year = parseInt(params['year']);
+          this.ApiService.buildAlbumsFromLabels([this.title]);
+        });
+        this.ApiService.albums.subscribe(albums=>{
+          this.albums = albums;
+        });
+      });
+    });
   }
   get filteredAlbums(){
     return this.albums.filter( e =>  e.title == this.title && e.artist == this.artist && e.year == this.year);

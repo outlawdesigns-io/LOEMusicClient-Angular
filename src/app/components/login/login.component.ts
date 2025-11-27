@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 
 @Component({
@@ -8,17 +9,13 @@ import { ApiService } from '../../services/api.service';
 })
 export class LoginComponent implements OnInit {
 
-  constructor(private api:ApiService) { }
+  constructor(private router:Router, private api:ApiService) { }
 
   ngOnInit() {
     this.api.ensureInitialized().then(()=>{
-      this.api.verifyToken().catch((err)=>{
-        //OnExpiredToken: verifyToken() deletes cookie and throws an error.
-        //catch that and try again (triggering login)
-        this.api.verifyToken();
+      this.api.verifyToken().then(()=>{
+        this.router.navigateByUrl('/recent');
       });
-    }).catch((err)=>{
-      console.log(err);
     });
   }
 

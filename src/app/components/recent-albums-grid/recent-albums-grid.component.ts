@@ -12,15 +12,7 @@ export class RecentAlbumsGridComponent implements OnInit {
   loading:boolean = false;
 
   constructor(private ApiService:ApiService) {
-    this.loading = true;
-    this.ApiService.albums.subscribe((albums)=>{
-      this.recentAlbums = [];
-      this.recentAlbums = albums;
-    });
-    this.ApiService.getRecent(300).subscribe((songs)=>{
-      this.ApiService.buildAlbums(songs);
-      this.loading = false;
-    });
+
   }
   addFiveRandomSongs(){
     let songs = this.recentAlbums.map(e => e.songs).flat();
@@ -32,6 +24,19 @@ export class RecentAlbumsGridComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loading = true;
+    this.ApiService.ensureInitialized().then(()=>{
+      this.ApiService.verifyToken().then(()=>{
+        this.ApiService.albums.subscribe((albums)=>{
+          this.recentAlbums = [];
+          this.recentAlbums = albums;
+        });
+        this.ApiService.getRecent(300).subscribe((songs)=>{
+          this.ApiService.buildAlbums(songs);
+          this.loading = false;
+        });
+      });
+    });
   }
 
 }

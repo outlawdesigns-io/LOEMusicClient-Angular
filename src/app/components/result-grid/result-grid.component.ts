@@ -16,18 +16,6 @@ export class ResultGridComponent implements OnInit {
   loading:boolean = false;
 
   constructor(private route: ActivatedRoute,private router:Router,private ApiService:ApiService){
-    this.ApiService.albums.subscribe(albums=>{
-      this.albums = albums;
-    });
-    route.params.subscribe(params=>{
-      this.key = params['key']
-      this.value = params['value'];
-      this.loading = true;
-      this.ApiService.search(this.key,this.value).subscribe((songs)=>{
-        this.ApiService.buildAlbums(songs);
-        this.loading = false;
-      });
-    });
   }
   addFiveRandomSongs(){
     let songs = this.albums.map(e => e.songs).flat();
@@ -39,6 +27,22 @@ export class ResultGridComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.ApiService.ensureInitialized().then(()=>{
+      this.ApiService.verifyToken().then(()=>{
+        this.ApiService.albums.subscribe(albums=>{
+          this.albums = albums;
+        });
+        this.route.params.subscribe(params=>{
+          this.key = params['key']
+          this.value = params['value'];
+          this.loading = true;
+          this.ApiService.search(this.key,this.value).subscribe((songs)=>{
+            this.ApiService.buildAlbums(songs);
+            this.loading = false;
+          });
+        });
+      });
+    });
   }
 
 }

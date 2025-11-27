@@ -14,8 +14,6 @@ import { Song } from '../models/song';
 import { Album } from '../models/album';
 import { Playlist } from '../models/playlist';
 
-console.log(typeof loeClient);
-
 interface TmpAlbum {
   [key:string]: any
 }
@@ -59,7 +57,6 @@ export class ApiService {
       this.apiUrl = API_ENDPOINT;
       this.domain = LOE_DOMAIN;
       this.cookieDomain = COOKIE_DOMAIN;
-      // this.isInitialized = false;
   }
   async ensureInitialized():Promise<void>{
     if (this.isInitialized) return;
@@ -69,10 +66,11 @@ export class ApiService {
   initApiClient():Promise<void>{
     return new Promise(async (resolve, reject)=>{
       try{
-        console.log(isDevMode());
         loeClient.init(this.apiUrl, this.authScope);
         await loeClient.get().auth.init(this.authDiscoveryUri,this.authClientId);
-        // this.isInitialized = true;
+        loeClient.get().onRefresh((tokenSet: any)=>{
+          isDevMode() ? this.cookie.set('oathTokenSet',JSON.stringify(tokenSet),200,'/','localhost',false,'Strict'):this.cookie.set('oathTokenSet',JSON.stringify(tokenSet),200,'/',this.cookieDomain,true,'Strict');
+        });
         resolve();
       }catch(err){
         console.error(err);
@@ -90,16 +88,9 @@ export class ApiService {
       window.location.href = challengeResults.redirectUri;
       return;
     }
-    try{
-      const tokenSet = JSON.parse(this.cookie.get('oathTokenSet'));
-      const user = await loeClient.get().auth.verifyAccessToken(tokenSet.access_token,[this.apiUrl]);
-      loeClient.get().auth.setTokenSet(tokenSet);
-      this.router.navigateByUrl('/recent');
-      return;
-    }catch(err){
-      isDevMode() ? this.cookie.delete('oathTokenSet', '/', 'localhost', true, 'Strict'):this.cookie.delete('oathTokenSet', '/', this.cookieDomain, true, 'Strict');
-      throw new Error('Token expired. Cookie Deleted.');
-    }
+    const tokenSet = JSON.parse(this.cookie.get('oathTokenSet'));
+    loeClient.get().auth.setTokenSet(tokenSet);
+    return;
   }
   async swapAuthorizationToken(authorizationCode:string):Promise<void>{
     const state = sessionStorage.getItem('oauth_state');
@@ -109,9 +100,14 @@ export class ApiService {
       url.pathname += '/';
     }
     await loeClient.get().auth.completeAuthFlow(url,state,verifier);
-    const tokenSet = loeClient.get().auth.getTokenSet();
-    isDevMode() ? this.cookie.set('oathTokenSet',JSON.stringify(tokenSet),200,'/','localhost',false,'Strict'):this.cookie.set('oathTokenSet',JSON.stringify(tokenSet),200,'/',this.cookieDomain,true,'Strict');
+    //const tokenSet = loeClient.get().auth.getTokenSet();
+    //isDevMode() ? this.cookie.set('oathTokenSet',JSON.stringify(tokenSet),200,'/','localhost',false,'Strict'):this.cookie.set('oathTokenSet',JSON.stringify(tokenSet),200,'/',this.cookieDomain,true,'Strict');
     this.router.navigateByUrl('/recent');
+  }
+  resetToken(){
+    //we need to be able to listen for token updates somewhere around here, so we can update the cookie.
+    isDevMode() ? this.cookie.delete('oathTokenSet', '/', 'localhost', true, 'Strict'):this.cookie.delete('oathTokenSet', '/', this.cookieDomain, true, 'Strict');
+    this.router.navigateByUrl('/login');
   }
   getSong(UID:number):Observable<Song>{
     return from(loeClient.get().songs.get(UID)).pipe(map( res => new Song(res)));

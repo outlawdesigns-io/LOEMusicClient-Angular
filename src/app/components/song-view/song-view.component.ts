@@ -15,17 +15,21 @@ export class SongViewComponent implements OnInit {
   loading:boolean = false;
 
   constructor(private route: ActivatedRoute,private router:Router,private ApiService:ApiService){
-    route.params.subscribe(params=>{
-      this.title = params['title'];
-      this.loading = true;
-      this.ApiService.search('title',this.title).subscribe((songs)=>{
-        this.songs = songs;
-        this.loading = false;
-      });
-    });
   }
 
   ngOnInit() {
+    this.ApiService.ensureInitialized().then(()=>{
+      this.ApiService.verifyToken().then(()=>{
+        this.route.params.subscribe(params=>{
+          this.title = params['title'];
+          this.loading = true;
+          this.ApiService.search('title',this.title).subscribe((songs)=>{
+            this.songs = songs;
+            this.loading = false;
+          });
+        });
+      });
+    });
   }
 
 }
